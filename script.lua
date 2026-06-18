@@ -347,7 +347,7 @@ CreditsLabel.Position = UDim2.new(0, 0, 0, 5)
 CreditsLabel.Size = UDim2.new(1, 0, 1, -10)
 CreditsLabel.Font = Enum.Font.SourceSansBold
 CreditsLabel.Text = "👑 Criadores:\nSilvahxz18 & marquezsGSTZ\n\n🔥 Menu Hub Inteligente\n⚙️ Sistema Avançado V2\n\nObrigado por usar o script!"
-CreditsLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- Mensagens em Vermelho
+CreditsLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
 CreditsLabel.TextSize = 13
 CreditsLabel.TextWrapped = true
 CreditsLabel.TextYAlignment = Enum.TextYAlignment.Top
@@ -480,4 +480,4 @@ OpenToggleButton.ScaleType = Enum.ScaleType.Stretch
 OpenToggleButton.Visible = false 
 Instance.new("UICorner", OpenToggleButton).CornerRadius = UDim.new(1, 0)
 
-loca
+local OpenToggleStroke = Inst
