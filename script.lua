@@ -1,4 +1,4 @@
--- [[ SILVAHXZ18 INTELLIGENT HIDE & SEEK HUB V2 ]] --
+-- [[ SILVAHXZ18 INTELLIGENT HIDE & SEEK HUB V1 ]] --
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local CoreGui = game:GetService("CoreGui")
@@ -323,8 +323,9 @@ EspNameButton.MouseButton1Click:Connect(function()
     EspNameButton.TextColor3 = EspNameEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
 end)
 
-EspBoxButton.MouseButton1Click:Connect(function()
-    EspBoxEnabled = not EspBoxEnabled
+boxEvent = EspBoxButton.MouseButton1Click:Connect(function()
+    boxEnabled = not boxEnabled
+    EspBoxEnabled = boxEnabled
     EspBoxButton.Text = EspBoxEnabled and "ESP Caixa: LIGADO" or "ESP Caixa: DESLIGADO"
     EspBoxButton.TextColor3 = EspBoxEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
 end)
@@ -478,6 +479,4 @@ OpenToggleButton.Size = UDim2.new(0, 40, 0, 40)
 OpenToggleButton.Image = "rbxassetid://95240563873925"
 OpenToggleButton.ScaleType = Enum.ScaleType.Stretch
 OpenToggleButton.Visible = false 
-Instance.new("UICorner", OpenToggleButton).CornerRadius = UDim.new(1, 0)
-
-local OpenToggleStroke = Inst
+Instance.new("UICorner", OpenToggleButton).CornerRadius = UDim.new(
