@@ -479,4 +479,5 @@ OpenToggleButton.Image = "rbxassetid://95240563873925"
 OpenToggleButton.ScaleType = Enum.ScaleType.Stretch
 OpenToggleButton.Visible = false 
 Instance.new("UICorner", OpenToggleButton).CornerRadius = UDim.new(1, 0)
-local
+
+loca
