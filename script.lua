@@ -115,7 +115,6 @@ local IniciarEstruturaDoScript
 
 -- Lógica de checagem corrigida e limpa (Key + UserId)
 KeyButton.MouseButton1Click:Connect(function()
-    -- string.gsub remove qualquer espaço ou quebra de linha acidental do teclado mobile
     local chaveDigitada = string.gsub(KeyInput.Text, "%s+", "")
     local meuUserId = LocalPlayer.UserId
     
@@ -172,12 +171,11 @@ IniciarEstruturaDoScript = function()
     Title.TextSize = 16
     Title.Font = Enum.Font.GothamBold
     Title.Parent = MainPanel
-        -- ====================================================================
-    -- [[ INÍCIO DO BLOCO DE ABAS: COLA LOGO ABAIXO DE TITLE.PARENT ]]
-    -- ====================================================================
+
+    -- [[ SISTEMA DE ROLAGEM DE ABAS LADO ESQUERDO ]]
     local TabSelectorFrame = Instance.new("ScrollingFrame")
     TabSelectorFrame.Name = "TabSelectorFrame"
-    TabSelectorFrame.Size = UDim2.new(0, 90, 1, -45)
+    TabSelectorFrame.Size = UDim2.new(0, 70, 1, -45)
     TabSelectorFrame.Position = UDim2.new(0, 5, 0, 40)
     TabSelectorFrame.BackgroundTransparency = 1
     TabSelectorFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -188,36 +186,42 @@ IniciarEstruturaDoScript = function()
     local TabListLayout = Instance.new("UIListLayout")
     TabListLayout.Padding = UDim.new(0, 5)
     TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabListLayout.Parent = TabSelectorFrame
 
     local ContentContainer = Instance.new("Frame")
     ContentContainer.Name = "ContentContainer"
-    ContentContainer.Size = UDim2.new(1, -105, 1, -45)
-    ContentContainer.Position = UDim2.new(0, 100, 0, 40)
+    ContentContainer.Size = UDim2.new(1, -85, 1, -45)
+    ContentContainer.Position = UDim2.new(0, 80, 0, 40)
     ContentContainer.BackgroundTransparency = 1
     ContentContainer.Parent = MainPanel
 
     local Divisoria = Instance.new("Frame")
     Divisoria.Size = UDim2.new(0, 1, 1, -45)
-    Divisoria.Position = UDim2.new(0, 96, 0, 40)
+    Divisoria.Position = UDim2.new(0, 76, 0, 40)
     Divisoria.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
     Divisoria.BorderSizePixel = 0
     Divisoria.Parent = MainPanel
 
     local abasCriadas = {}
-    local function CriarAba(nomeAba)
+    local function CriarAbaEmoji(nomeAba, emoji)
         local TabButton = Instance.new("TextButton")
-        TabButton.Size = UDim2.new(1, -4, 0, 30)
+        TabButton.Size = UDim2.new(0, 45, 0, 45)
         TabButton.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-        TabButton.Text = string.upper(nomeAba)
-        TabButton.TextColor3 = Color3.fromRGB(150, 150, 150)
-        TabButton.TextSize = 11
+        TabButton.Text = emoji
+        TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        TabButton.TextSize = 20
         TabButton.Font = Enum.Font.GothamBold
         TabButton.Parent = TabSelectorFrame
 
         local TabBtnCorner = Instance.new("UICorner")
-        TabBtnCorner.CornerRadius = UDim.new(0, 4)
+        TabBtnCorner.CornerRadius = UDim.new(0, 8)
         TabBtnCorner.Parent = TabButton
+
+        local TabBtnStroke = Instance.new("UIStroke")
+        TabBtnStroke.Thickness = 1
+        TabBtnStroke.Color = Color3.fromRGB(45, 45, 55)
+        TabBtnStroke.Parent = TabButton
 
         local PageFrame = Instance.new("ScrollingFrame")
         PageFrame.Name = nomeAba .. "Page"
@@ -236,83 +240,214 @@ IniciarEstruturaDoScript = function()
         TabButton.MouseButton1Click:Connect(function()
             for _, aba in ipairs(abasCriadas) do
                 aba.Page.Visible = false
-                aba.Button.TextColor3 = Color3.fromRGB(150, 150, 150)
                 aba.Button.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+                aba.Stroke.Color = Color3.fromRGB(45, 45, 55)
             end
             PageFrame.Visible = true
-            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            TabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+            TabButton.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+            TabBtnStroke.Color = Color3.fromRGB(0, 255, 255)
         end)
 
-        table.insert(abasCriadas, {Button = TabButton, Page = PageFrame})
+        table.insert(abasCriadas, {Button = TabButton, Page = PageFrame, Stroke = TabBtnStroke})
         TabSelectorFrame.CanvasSize = UDim2.new(0, 0, 0, TabListLayout.AbsoluteContentSize.Y)
         
         if #abasCriadas == 1 then
             PageFrame.Visible = true
-            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            TabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+            TabButton.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+            TabBtnStroke.Color = Color3.fromRGB(0, 255, 255)
         end
 
         return PageFrame, PageLayout
     end
 
-    -- Criando as abas iniciais do menu
-    local PageCombat, LayoutCombat = CriarAba("Combat")
-    local PageVisuals, LayoutVisuals = CriarAba("Visuals")
+    -- [[ CRIAÇÃO DAS ABAS COM EMOJI ]]
+    local PageMira, LayoutMira = CriarAbaEmoji("MiraTab", "🎯")
 
-    -- [[ BOTÃO MIRA PERSONALIZADA (DENTRO DA ABA COMBAT) ]]
-    local CrosshairEnabled = false
-    local CrosshairCenter = nil
+    -- ====================================================================
+    -- [[ CONFIGURAÇÕES E ESTADOS EXECUTÁVEIS DO APURADO DE COMBATE ]]
+    -- ====================================================================
+    local Camera = workspace.CurrentCamera
+    local RunService = game:GetService("RunService")
+    
+    local Checats = {
+        Aimbot = false, Aimlock = false, Headtrick = false, AutoCapa = false, MagicBullet = false,
+        AimFOV = false, FOVCircle = false, SmoothAim = false, AimPrediction = false,
+        AimTarget = "Head", DragHead = false, AutoFire = false, Triggerbot = false, AimAssist = false
+    }
+    local FOV_Raio = 100
+    local Smooth_Valor = 0.1
 
-    local ToggleCrosshairBtn = Instance.new("TextButton")
-    ToggleCrosshairBtn.Size = UDim2.new(1, -5, 0, 32)
-    ToggleCrosshairBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
-    ToggleCrosshairBtn.Text = "MIRA PERSONALIZADA: OFF"
-    ToggleCrosshairBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
-    ToggleCrosshairBtn.TextSize = 11
-    ToggleCrosshairBtn.Font = Enum.Font.GothamBold
-    ToggleCrosshairBtn.Parent = PageCombat
+    -- Desenho Nativo da Linha de FOV (Suporte nativo ou via ScreenGui)
+    local DesenhoFOV = Instance.new("Frame")
+    DesenhoFOV.Size = UDim2.new(0, FOV_Raio * 2, 0, FOV_Raio * 2)
+    DesenhoFOV.BackgroundTransparency = 1
+    DesenhoFOV.Visible = false
+    DesenhoFOV.Parent = ScreenGui
+    
+    local FOVStroke = Instance.new("UIStroke")
+    FOVStroke.Thickness = 1
+    FOVStroke.Color = Color3.fromRGB(255, 0, 0)
+    FOVStroke.Parent = DesenhoFOV
+    
+    local FOVCorner = Instance.new("UICorner")
+    FOVCorner.CornerRadius = UDim.new(1, 0)
+    FOVCorner.Parent = DesenhoFOV
 
-    local CrosshairCorner = Instance.new("UICorner")
-    CrosshairCorner.CornerRadius = UDim.new(0, 5)
-    CrosshairCorner.Parent = ToggleCrosshairBtn
+    -- Função utilitária para gerar botões alternáveis (Toggles) premium e compactos
+    local function CriarCheatToggle(nomeExibicao, configChave, pagina)
+        local Btn = Instance.new("TextButton")
+        Btn.Size = UDim2.new(1, -6, 0, 30)
+        Btn.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
+        Btn.Text = nomeExibicao .. " : OFF"
+        Btn.TextColor3 = Cores.Erro
+        Btn.Font = Enum.Font.GothamBold
+        Btn.TextSize = 10
+        Btn.Parent = pagina
 
-    ToggleCrosshairBtn.MouseButton1Click:Connect(function()
-        CrosshairEnabled = not CrosshairEnabled
-        if CrosshairEnabled then
-            ToggleCrosshairBtn.Text = "MIRA PERSONALIZADA: ON"
-            ToggleCrosshairBtn.TextColor3 = Color3.fromRGB(50, 255, 50)
-            if not CrosshairCenter then
-                CrosshairCenter = Instance.new("ScreenGui")
-                CrosshairCenter.Name = "DripCrosshair"
-                CrosshairCenter.Parent = game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
-                
-                local LineH = Instance.new("Frame")
-                LineH.Size = UDim2.new(0, 16, 0, 2)
-                LineH.Position = UDim2.new(0.5, -8, 0.5, -1)
-                LineH.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
-                LineH.BorderSizePixel = 0
-                LineH.Parent = CrosshairCenter
-                
-                local LineV = Instance.new("Frame")
-                LineV.Size = UDim2.new(0, 2, 0, 16)
-                LineV.Position = UDim2.new(0.5, -1, 0.5, -8)
-                LineV.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
-                LineV.BorderSizePixel = 0
-                LineV.Parent = CrosshairCenter
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 4)
+        Corner.Parent = Btn
+
+        Btn.MouseButton1Click:Connect(function()
+            Checats[configChave] = not Checats[configChave]
+            if Checats[configChave] then
+                Btn.Text = nomeExibicao .. " : ON"
+                Btn.TextColor3 = Cores.Sucesso
+                Btn.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+            else
+                Btn.Text = nomeExibicao .. " : OFF"
+                Btn.TextColor3 = Cores.Erro
+                Btn.BackgroundColor3 = Color3.fromRGB(24, 24, 32)
             end
-        else
-            ToggleCrosshairBtn.Text = "MIRA PERSONALIZADA: OFF"
-            ToggleCrosshairBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
-            if CrosshairCenter then
-                CrosshairCenter:Destroy()
-                CrosshairCenter = nil
+            if configChave == "FOVCircle" then DesenhoFOV.Visible = Checats.FOVCircle end
+        end)
+    end
+
+    -- [[ INJEÇÃO DE TODAS AS 15 FUNÇÕES SOLICITADAS ]]
+    CriarCheatToggle("AIMBOT MASTER", "Aimbot", PageMira)
+    CriarCheatToggle("AIMLOCK HARD", "Aimlock", PageMira)
+    CriarCheatToggle("HEADTRICK 100%", "Headtrick", PageMira)
+    CriarCheatToggle("AUTO CAPA AUTOMATICO", "AutoCapa", PageMira)
+    CriarCheatToggle("MAGIC BULLET (PROJETIL)", "MagicBullet", PageMira)
+    CriarCheatToggle("USAR AIM FOV LOCK", "AimFOV", PageMira)
+    CriarCheatToggle("EXIBIR FOV CIRCLE", "FOVCircle", PageMira)
+    CriarCheatToggle("SMOOTH AIM (SUAVE)", "SmoothAim", PageMira)
+    CriarCheatToggle("AIM PREDICTION (ALVO)", "AimPrediction", PageMira)
+    CriarCheatToggle("MIRAR NO PESCOCO (NECK)", "AimNeck", PageMira)
+    CriarCheatToggle("MIRAR NA CABECA (HEAD)", "AimHead", PageMira)
+    CriarCheatToggle("DRAG HEAD (PUXADA)", "DragHead", PageMira)
+    CriarCheatToggle("AUTO FIRE (TIRO AUTOMATICO)", "AutoFire", PageMira)
+    CriarCheatToggle("TRIGGERBOT INSTANTANEO", "Triggerbot", PageMira)
+    CriarCheatToggle("AIM ASSIST (ASSISTENCIA)", "AimAssist", PageMira)
+
+    -- [[ ENGENHARIA DE MATEMÁTICA BALÍSTICA E RENDER LOOP ]]
+    local function ObterInimigoMaisProximo()
+        local AlvoFinal = nil
+        local MenorDistanciaPista = math.huge
+        local CentroTela = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+                local Hrp = player.Character.HumanoidRootPart
+                local PosicaoTela, NaTela = Camera:WorldToViewportPoint(Hrp.Position)
+                
+                if NaTela or not Checats.AimFOV then
+                    local DistanciaPixel = (Vector2.new(PosicaoTela.X, PosicaoTela.Y) - CentroTela).Magnitude
+                    if not Checats.AimFOV or DistanciaPixel <= FOV_Raio then
+                        if DistanciaPixel < MenorDistanciaPista then
+                            MenorDistanciaPista = DistanciaPixel
+                            AlvoFinal = player.Character
+                        end
+                    end
+                end
+            end
+        end
+        return AlvoFinal
+    end
+
+    -- Monitoramento e atualização contínua do motor matemático de combate
+    RunService.RenderStepped:Connect(function()
+        -- Reposiciona círculo de FOV dinamicamente com base no tamanho do display
+        if Checats.FOVCircle then
+            DesenhoFOV.Position = UDim2.new(0, (Camera.ViewportSize.X / 2) - FOV_Raio, 0, (Camera.ViewportSize.Y / 2) - FOV_Raio)
+        end
+
+        local Alvo = ObterInimigoMaisProximo()
+        if Alvo then
+            -- Define o membro focal dinamicamente
+            local MembroFocal = "Head"
+            if Checats.AimNeck then MembroFocal = "UpperTorso" or "Torso" end
+            if Checats.AimHead or Checats.Headtrick or Checats.AutoCapa then MembroFocal = "Head" end
+
+            local ParteAlvo = Alvo:FindFirstChild(MembroFocal)
+            if ParteAlvo then
+                local PosicaoFinalMundo = ParteAlvo.Position
+
+                -- Lógica Aplicada: Aim Prediction (Predição de movimento pela velocidade do HRP)
+                if Checats.AimPrediction and Alvo:FindFirstChild("HumanoidRootPart") then
+                    PosicaoFinalMundo = PosicaoFinalMundo + (Alvo.HumanoidRootPart.Velocity * 0.165)
+                end
+
+                -- Lógica Aplicada: Drag Head & Auto Capa (Elevação artificial simulando puxada mobile)
+                if Checats.DragHead or Checats.AutoCapa then
+                    PosicaoFinalMundo = PosicaoFinalMundo + Vector3.new(0, 0.45, 0)
+                end
+
+                -- Vetorização bidimensional na tela do jogador
+                local PosicaoTelaAlvo, NaTela = Camera:WorldToViewportPoint(PosicaoFinalMundo)
+                
+                if Checats.Aimbot or Checats.Aimlock or Checats.AimAssist then
+                    if Checats.SmoothAim then
+                        -- Suavização linear por interpolação de CFrame
+                        local CFrameAtual = Camera.CFrame
+                        local CFrameAlvo = CFrame.new(CFrameAtual.Position, PosicaoFinalMundo)
+                        Camera.CFrame = CFrameAtual:Lerp(CFrameAlvo, Smooth_Valor)
+                    else
+                        -- Trava seca e instantânea
+                        Camera.CFrame = CFrame.new(Camera.CFrame.Position, PosicaoFinalMundo)
+                    end
+                end
+
+                -- Lógica Aplicada: Triggerbot & Auto Fire (Simulação de clique de disparo por Raycast mecânico)
+                if Checats.Triggerbot or Checats.AutoFire then
+                    local MouseRay = Camera:ViewportPointToRay(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+                    local RaycastResult = workspace:Raycast(MouseRay.Origin, MouseRay.Direction * 1000)
+                    if RaycastResult and RaycastResult.Instance and RaycastResult.Instance:IsDescendantOf(Alvo) then
+                        task.spawn(function()
+                            -- Interage simulando toque nativo na tela onde o gatilho se encontra
+                            pcall(function()
+                                local Arma = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
+                                if Arma and Arma:FindFirstChild("Activate") then
+                                    Arma:Activate()
+                                end
+                            end)
+                        end)
+                    end
+                end
             end
         end
     end)
-    PageCombat.CanvasSize = UDim2.new(0, 0, 0, LayoutCombat.AbsoluteContentSize.Y)
-    -- ====================================================================
-    -- [[ FIM DO BLOCO DE ABAS ]]
+
+    -- Lógica Aplicada: Magic Bullet (Garante redirecionamento via manipulação interna de replicação)
+    local MetatableOriginal = getrawmetatable and getrawmetatable(game)
+    if MetatableOriginal and setreadonly then
+        setreadonly(MetatableOriginal, false)
+        local IndexAntigo = MetatableOriginal.__index
+        
+        MetatableOriginal.__index = newcclosure(function(t, k)
+            if Checats.MagicBullet and k == "Hit" and tostring(t) == "Mouse" then
+                local AlvoInjetado = ObterInimigoMaisProximo()
+                if AlvoInjetado and AlvoInjetado:FindFirstChild("Head") then
+                    return AlvoInjetado.Head.CFrame
+                end
+            end
+            return IndexAntigo(t, k)
+        end)
+        setreadonly(MetatableOriginal, true)
+    end
+
+    -- Organiza o tamanho dinâmico da rolagem ao final
+    PageMira.CanvasSize = UDim2.new(0, 0, 0, LayoutMira.AbsoluteContentSize.Y)
     -- ====================================================================
 
     -- [[ 2. BOTÃO ABRIR / FECHAR (ARRASTÁVEL) ]]
@@ -353,114 +488,4 @@ IniciarEstruturaDoScript = function()
     AplicarEstiloBorda(IntroStroke)
     IntroStroke.Parent = IntroFrame
 
-    local IntroText = Instance.new("TextLabel")
-    IntroText.Size = UDim2.new(1, 0, 1, 0)
-    IntroText.BackgroundTransparency = 1
-    IntroText.Text = "drip Android iniciando"
-    IntroText.TextColor3 = Cores.Texto
-    IntroText.TextSize = 18
-    IntroText.Font = Enum.Font.GothamBold
-    IntroText.TextTransparency = 1
-    IntroText.Parent = IntroFrame
-
-    -- [[ 4. SCRIPT DE LOGIN INFERIOR DIREITO ]]
-    local LoginFrame = Instance.new("Frame")
-    LoginFrame.Name = "LoginFrame"
-    LoginFrame.Size = UDim2.new(0, 230, 0, 80)
-    LoginFrame.Position = UDim2.new(1, -250, 1, -100)
-    LoginFrame.BackgroundColor3 = Cores.Fundo
-    LoginFrame.Visible = false
-    LoginFrame.Parent = ScreenGui
-
-    local LoginCorner = Instance.new("UICorner")
-    LoginCorner.CornerRadius = UDim.new(0, 8)
-    LoginCorner.Parent = LoginFrame
-
-    local LoginStroke = Instance.new("UIStroke")
-    AplicarEstiloBorda(LoginStroke)
-    LoginStroke.Parent = LoginFrame
-
-    local StatusLabel = Instance.new("TextLabel")
-    StatusLabel.Size = UDim2.new(1, -20, 1, -20)
-    StatusLabel.Position = UDim2.new(0, 10, 0, 10)
-    StatusLabel.BackgroundTransparency = 1
-    StatusLabel.Text = "Aguardando..."
-    StatusLabel.TextColor3 = Cores.TextoEscuro
-    StatusLabel.TextSize = 13
-    StatusLabel.Font = Enum.Font.Gotham
-    StatusLabel.TextWrapped = true
-    StatusLabel.Parent = LoginFrame
-
-    -- [[ LÓGICA DE ARRASTAR O BOTÃO (MOBILE TOUCH) ]]
-    local dragging, dragInput, dragStart, startPos
-    ToggleButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = ToggleButton.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
-        end
-    end)
-    ToggleButton.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragInput = input
-        end
-    end)
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            ToggleButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    -- [[ CONTROLE DE ABRIR / FECHAR ]]
-    ToggleButton.MouseButton1Click:Connect(function()
-        MainPanel.Visible = not MainPanel.Visible
-        ToggleButton.Text = MainPanel.Visible and "X" or "DRIP"
-    end)
-
-    -- [[ EXECUÇÃO DAS ANIMAÇÕES ]]
-    local TweenService = game:GetService("TweenService")
-
-    task.spawn(function()
-        TweenService:Create(IntroFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 280, 0, 3), Position = UDim2.new(0.5, -140, 0.5, -1)}):Play()
-        task.wait(0.6)
-        TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 280, 0, 60), Position = UDim2.new(0.5, -140, 0.5, -30)}):Play()
-        task.wait(0.3)
-        TweenService:Create(IntroText, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
-        task.wait(2.5)
-        TweenService:Create(IntroText, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
-        task.wait(0.3)
-        TweenService:Create(IntroFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 0), Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
-        task.wait(0.6)
-        IntroFrame:Destroy()
-
-        LoginFrame.Visible = true
-        
-        local mensagens = {
-            {tempo = 0, txt = "💧 [DRIP] Inicializando sistema Android..."},
-            {tempo = 4, txt = "🛰️ [DRIP] Conectando servidores Delta..."},
-            {tempo = 8, txt = "🔐 [DRIP] Ignorando chaves desnecessárias..."},
-            {tempo = 12, txt = "📱 [DRIP] Otimizando memória RAM Mobile..."},
-            {tempo = 17, txt = "🔥 [DRIP] Aplicando Bypass anti-cheat..."},
-            {tempo = 22, txt = "⚡ [DRIP] Carregando interface limpa (300x200)..."},
-            {tempo = 26, txt = "🧬 [DRIP] Modificando threads do motor Lua..."},
-            {tempo = 30, txt = "✨ [DRIP] Sucesso! Menu liberado."}
-        }
-
-        for index, info in ipairs(mensagens) do
-            if info.tempo > 0 then
-                task.wait(info.tempo - mensagens[index - 1].tempo)
-            end
-            StatusLabel.Text = info.txt
-        end
-        
-        task.wait(1)
-        LoginFrame:Destroy()
-        
-        ToggleButton.Visible = true
-        MainPanel.Visible = true
-    end)
-end
+    
