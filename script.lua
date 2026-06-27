@@ -262,9 +262,10 @@ IniciarEstruturaDoScript = function()
 
     -- [[ CRIAÇÃO DAS ABAS COM EMOJI ]]
     local PageMira, LayoutMira = CriarAbaEmoji("MiraTab", "🎯")
+    local PageVisuais, LayoutVisuais = CriarAbaEmoji("VisuaisTab", "👁️")
 
     -- ====================================================================
-    -- [[ CONFIGURAÇÕES E ESTADOS EXECUTÁVEIS DO APURADO DE COMBATE ]]
+    -- [[ ESTRUTURAS DO CHEAT DE MIRA (🎯) ]]
     -- ====================================================================
     local Camera = workspace.CurrentCamera
     local RunService = game:GetService("RunService")
@@ -272,12 +273,16 @@ IniciarEstruturaDoScript = function()
     local Checats = {
         Aimbot = false, Aimlock = false, Headtrick = false, AutoCapa = false, MagicBullet = false,
         AimFOV = false, FOVCircle = false, SmoothAim = false, AimPrediction = false,
-        AimTarget = "Head", DragHead = false, AutoFire = false, Triggerbot = false, AimAssist = false
+        AimTarget = "Head", DragHead = false, AutoFire = false, Triggerbot = false, AimAssist = false,
+        
+        -- Configurações da Aba de Visuais (👁️)
+        Wallhack = false, EnemyESP = false, BoxESP = false, LineESP = false, SkeletonESP = false,
+        NameESP = false, DistanceESP = false, HealthESP = false, LootESP = false, VehicleESP = false,
+        Warning360 = false, RadarHack = false, MiniMapESP = false
     }
     local FOV_Raio = 100
     local Smooth_Valor = 0.1
 
-    -- Desenho Nativo da Linha de FOV (Suporte nativo ou via ScreenGui)
     local DesenhoFOV = Instance.new("Frame")
     DesenhoFOV.Size = UDim2.new(0, FOV_Raio * 2, 0, FOV_Raio * 2)
     DesenhoFOV.BackgroundTransparency = 1
@@ -293,7 +298,6 @@ IniciarEstruturaDoScript = function()
     FOVCorner.CornerRadius = UDim.new(1, 0)
     FOVCorner.Parent = DesenhoFOV
 
-    -- Função utilitária para gerar botões alternáveis (Toggles) premium e compactos
     local function CriarCheatToggle(nomeExibicao, configChave, pagina)
         local Btn = Instance.new("TextButton")
         Btn.Size = UDim2.new(1, -6, 0, 30)
@@ -323,7 +327,7 @@ IniciarEstruturaDoScript = function()
         end)
     end
 
-    -- [[ INJEÇÃO DE TODAS AS 15 FUNÇÕES SOLICITADAS ]]
+    -- Injetando Botões na Aba da Mira
     CriarCheatToggle("AIMBOT MASTER", "Aimbot", PageMira)
     CriarCheatToggle("AIMLOCK HARD", "Aimlock", PageMira)
     CriarCheatToggle("HEADTRICK 100%", "Headtrick", PageMira)
@@ -339,6 +343,43 @@ IniciarEstruturaDoScript = function()
     CriarCheatToggle("AUTO FIRE (TIRO AUTOMATICO)", "AutoFire", PageMira)
     CriarCheatToggle("TRIGGERBOT INSTANTANEO", "Triggerbot", PageMira)
     CriarCheatToggle("AIM ASSIST (ASSISTENCIA)", "AimAssist", PageMira)
+
+    -- [[ INJEÇÃO DE TODAS AS 13 FUNÇÕES NA ABA DE VISUAIS (👁️) ]]
+    CriarCheatToggle("WALLHACK (CHAMS)", "Wallhack", PageVisuais)
+    CriarCheatToggle("ENEMY ESP (TRACK)", "EnemyESP", PageVisuais)
+    CriarCheatToggle("BOX ESP (CAIXA)", "BoxESP", PageVisuais)
+    CriarCheatToggle("LINE ESP (LINHAS)", "LineESP", PageVisuais)
+    CriarCheatToggle("SKELETON ESP", "SkeletonESP", PageVisuais)
+    CriarCheatToggle("NAME ESP (NOME)", "NameESP", PageVisuais)
+    CriarCheatToggle("DISTANCE ESP (METROS)", "DistanceESP", PageVisuais)
+    CriarCheatToggle("HEALTH ESP (VIDA)", "HealthESP", PageVisuais)
+    CriarCheatToggle("LOOT ESP (ITEMS)", "LootESP", PageVisuais)
+    CriarCheatToggle("VEHICLE ESP (CARROS)", "VehicleESP", PageVisuais)
+    CriarCheatToggle("ALERTA 360° APURADO", "Warning360", PageVisuais)
+    CriarCheatToggle("RADAR HACK CENTRAL", "RadarHack", PageVisuais)
+    CriarCheatToggle("MINI MAP ESP PLANO", "MiniMapESP", PageVisuais)
+
+    -- UI Extra para Warning 360 e Radar Hack instalados na tela principal
+    local Alerta360Label = Instance.new("TextLabel")
+    Alerta360Label.Size = UDim2.new(0, 200, 0, 25)
+    Alerta360Label.Position = UDim2.new(0.5, -100, 0.2, 0)
+    Alerta360Label.BackgroundTransparency = 1
+    Alerta360Label.Text = "⚠️ INIMIGO PROXIMO!"
+    Alerta360Label.TextColor3 = Color3.fromRGB(255, 50, 50)
+    Alerta360Label.Font = Enum.Font.GothamBold
+    Alerta360Label.TextSize = 14
+    Alerta360Label.Visible = false
+    Alerta360Label.Parent = ScreenGui
+
+    local RadarFrame = Instance.new("Frame")
+    RadarFrame.Size = UDim2.new(0, 80, 0, 80)
+    RadarFrame.Position = UDim2.new(0, 10, 1, -170)
+    RadarFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    RadarFrame.BackgroundTransparency = 0.3
+    RadarFrame.Visible = false
+    RadarFrame.Parent = ScreenGui
+    local RadarCorner = Instance.new("UICorner") RadarCorner.CornerRadius = UDim.new(1,0) RadarCorner.Parent = RadarFrame
+    local RadarStroke = Instance.new("UIStroke") RadarStroke.Color = Color3.fromRGB(0,255,255) RadarStroke.Parent = RadarFrame
 
     -- [[ ENGENHARIA DE MATEMÁTICA BALÍSTICA E RENDER LOOP ]]
     local function ObterInimigoMaisProximo()
@@ -365,16 +406,82 @@ IniciarEstruturaDoScript = function()
         return AlvoFinal
     end
 
-    -- Monitoramento e atualização contínua do motor matemático de combate
+    -- Sistema de Renderização do ESP Otimizado para Evitar Mem Leak
+    local CacheESP = {}
+    local function GerarEstruturaESP(player)
+        if CacheESP[player] then return end
+        local Estrutura = {}
+
+        local BbGui = Instance.new("BillboardGui")
+        BbGui.AlwaysOnTop = true
+        BbGui.Size = UDim2.new(0, 150, 0, 50)
+        BbGui.StudsOffset = Vector3.new(0, 3, 0)
+        
+        local InfoText = Instance.new("TextLabel")
+        InfoText.Size = UDim2.new(1, 0, 1, 0)
+        InfoText.BackgroundTransparency = 1
+        InfoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        InfoText.Font = Enum.Font.GothamBold
+        InfoText.TextSize = 9
+        InfoText.Text = ""
+        InfoText.Parent = BbGui
+        Estrutura.TextLabel = InfoText
+        Estrutura.Billboard = BbGui
+
+        local Highlight = Instance.new("Highlight")
+        Highlight.FillColor = Color3.fromRGB(130, 50, 250)
+        Highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        Highlight.FillTransparency = 0.5
+        Highlight.OutlineTransparency = 0
+        Estrutura.Chams = Highlight
+
+        local Line = Instance.new("Frame")
+        Line.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+        Line.BorderSizePixel = 0
+        Line.AnchorPoint = Vector2.new(0.5, 0.5)
+        Line.Visible = false
+        Line.Parent = ScreenGui
+        Estrutura.SnapLine = Line
+
+        local Box = Instance.new("Frame")
+        Box.BackgroundTransparency = 1
+        Box.Visible = false
+        Box.Parent = ScreenGui
+        local BoxStroke = Instance.new("UIStroke") BoxStroke.Color = Color3.fromRGB(255, 255, 0) BoxStroke.Thickness = 1 BoxStroke.Parent = Box
+        Estrutura.BoxFrame = Box
+
+        local PontoRadar = Instance.new("Frame")
+        PontoRadar.Size = UDim2.new(0, 4, 0, 4)
+        PontoRadar.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+        PontoRadar.Visible = false
+        PontoRadar.Parent = RadarFrame
+        local PrCorner = Instance.new("UICorner") PrCorner.CornerRadius = UDim.new(1,0) PrCorner.Parent = PontoRadar
+        Estrutura.RadarBlip = PontoRadar
+
+        CacheESP[player] = Estrutura
+    end
+
+    Players.PlayerRemoving:Connect(function(player)
+        if CacheESP[player] then
+            pcall(function()
+                CacheESP[player].Billboard:Destroy()
+                CacheESP[player].Chams:Destroy()
+                CacheESP[player].SnapLine:Destroy()
+                CacheESP[player].BoxFrame:Destroy()
+                CacheESP[player].RadarBlip:Destroy()
+            end)
+            CacheESP[player] = nil
+        end
+    end)
+
+    -- Monitoramento e atualização contínua do motor matemático de combate e Visuais
     RunService.RenderStepped:Connect(function()
-        -- Reposiciona círculo de FOV dinamicamente com base no tamanho do display
         if Checats.FOVCircle then
             DesenhoFOV.Position = UDim2.new(0, (Camera.ViewportSize.X / 2) - FOV_Raio, 0, (Camera.ViewportSize.Y / 2) - FOV_Raio)
         end
 
         local Alvo = ObterInimigoMaisProximo()
         if Alvo then
-            -- Define o membro focal dinamicamente
             local MembroFocal = "Head"
             if Checats.AimNeck then MembroFocal = "UpperTorso" or "Torso" end
             if Checats.AimHead or Checats.Headtrick or Checats.AutoCapa then MembroFocal = "Head" end
@@ -383,109 +490,8 @@ IniciarEstruturaDoScript = function()
             if ParteAlvo then
                 local PosicaoFinalMundo = ParteAlvo.Position
 
-                -- Lógica Aplicada: Aim Prediction (Predição de movimento pela velocidade do HRP)
                 if Checats.AimPrediction and Alvo:FindFirstChild("HumanoidRootPart") then
                     PosicaoFinalMundo = PosicaoFinalMundo + (Alvo.HumanoidRootPart.Velocity * 0.165)
                 end
 
-                -- Lógica Aplicada: Drag Head & Auto Capa (Elevação artificial simulando puxada mobile)
-                if Checats.DragHead or Checats.AutoCapa then
-                    PosicaoFinalMundo = PosicaoFinalMundo + Vector3.new(0, 0.45, 0)
-                end
-
-                -- Vetorização bidimensional na tela do jogador
-                local PosicaoTelaAlvo, NaTela = Camera:WorldToViewportPoint(PosicaoFinalMundo)
-                
-                if Checats.Aimbot or Checats.Aimlock or Checats.AimAssist then
-                    if Checats.SmoothAim then
-                        -- Suavização linear por interpolação de CFrame
-                        local CFrameAtual = Camera.CFrame
-                        local CFrameAlvo = CFrame.new(CFrameAtual.Position, PosicaoFinalMundo)
-                        Camera.CFrame = CFrameAtual:Lerp(CFrameAlvo, Smooth_Valor)
-                    else
-                        -- Trava seca e instantânea
-                        Camera.CFrame = CFrame.new(Camera.CFrame.Position, PosicaoFinalMundo)
-                    end
-                end
-
-                -- Lógica Aplicada: Triggerbot & Auto Fire (Simulação de clique de disparo por Raycast mecânico)
-                if Checats.Triggerbot or Checats.AutoFire then
-                    local MouseRay = Camera:ViewportPointToRay(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-                    local RaycastResult = workspace:Raycast(MouseRay.Origin, MouseRay.Direction * 1000)
-                    if RaycastResult and RaycastResult.Instance and RaycastResult.Instance:IsDescendantOf(Alvo) then
-                        task.spawn(function()
-                            -- Interage simulando toque nativo na tela onde o gatilho se encontra
-                            pcall(function()
-                                local Arma = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Tool")
-                                if Arma and Arma:FindFirstChild("Activate") then
-                                    Arma:Activate()
-                                end
-                            end)
-                        end)
-                    end
-                end
-            end
-        end
-    end)
-
-    -- Lógica Aplicada: Magic Bullet (Garante redirecionamento via manipulação interna de replicação)
-    local MetatableOriginal = getrawmetatable and getrawmetatable(game)
-    if MetatableOriginal and setreadonly then
-        setreadonly(MetatableOriginal, false)
-        local IndexAntigo = MetatableOriginal.__index
-        
-        MetatableOriginal.__index = newcclosure(function(t, k)
-            if Checats.MagicBullet and k == "Hit" and tostring(t) == "Mouse" then
-                local AlvoInjetado = ObterInimigoMaisProximo()
-                if AlvoInjetado and AlvoInjetado:FindFirstChild("Head") then
-                    return AlvoInjetado.Head.CFrame
-                end
-            end
-            return IndexAntigo(t, k)
-        end)
-        setreadonly(MetatableOriginal, true)
-    end
-
-    -- Organiza o tamanho dinâmico da rolagem ao final
-    PageMira.CanvasSize = UDim2.new(0, 0, 0, LayoutMira.AbsoluteContentSize.Y)
-    -- ====================================================================
-
-    -- [[ 2. BOTÃO ABRIR / FECHAR (ARRASTÁVEL) ]]
-    local ToggleButton = Instance.new("TextButton")
-    ToggleButton.Name = "ToggleButton"
-    ToggleButton.Size = UDim2.new(0, 55, 0, 55)
-    ToggleButton.Position = UDim2.new(0, 20, 0.5, -27)
-    ToggleButton.BackgroundColor3 = Cores.Fundo
-    ToggleButton.Text = "DRIP"
-    ToggleButton.TextColor3 = Cores.Texto
-    ToggleButton.TextSize = 12
-    ToggleButton.Font = Enum.Font.GothamBold
-    ToggleButton.Visible = false
-    ToggleButton.Parent = ScreenGui
-
-    local ButtonCorner = Instance.new("UICorner")
-    ButtonCorner.CornerRadius = UDim.new(1, 0)
-    ButtonCorner.Parent = ToggleButton
-
-    local ButtonStroke = Instance.new("UIStroke")
-    AplicarEstiloBorda(ButtonStroke)
-    ButtonStroke.Parent = ToggleButton
-
-    -- [[ 3. ANIMAÇÃO DE INTRODUÇÃO (ESTILO RAYFIELD) ]]
-    local IntroFrame = Instance.new("Frame")
-    IntroFrame.Name = "IntroFrame"
-    IntroFrame.Size = UDim2.new(0, 1, 0, 3)
-    IntroFrame.Position = UDim2.new(0.5, 0, 0.5, -1)
-    IntroFrame.BackgroundColor3 = Cores.Fundo
-    IntroFrame.ClipsDescendants = true
-    IntroFrame.Parent = ScreenGui
-
-    local IntroCorner = Instance.new("UICorner")
-    IntroCorner.CornerRadius = UDim.new(0, 8)
-    IntroCorner.Parent = IntroFrame
-
-    local IntroStroke = Instance.new("UIStroke")
-    AplicarEstiloBorda(IntroStroke)
-    IntroStroke.Parent = IntroFrame
-
-    
+         
