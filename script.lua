@@ -172,6 +172,148 @@ IniciarEstruturaDoScript = function()
     Title.TextSize = 16
     Title.Font = Enum.Font.GothamBold
     Title.Parent = MainPanel
+        -- ====================================================================
+    -- [[ INÍCIO DO BLOCO DE ABAS: COLA LOGO ABAIXO DE TITLE.PARENT ]]
+    -- ====================================================================
+    local TabSelectorFrame = Instance.new("ScrollingFrame")
+    TabSelectorFrame.Name = "TabSelectorFrame"
+    TabSelectorFrame.Size = UDim2.new(0, 90, 1, -45)
+    TabSelectorFrame.Position = UDim2.new(0, 5, 0, 40)
+    TabSelectorFrame.BackgroundTransparency = 1
+    TabSelectorFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    TabSelectorFrame.ScrollBarThickness = 2
+    TabSelectorFrame.ScrollBarImageColor3 = Color3.fromRGB(130, 50, 250)
+    TabSelectorFrame.Parent = MainPanel
+
+    local TabListLayout = Instance.new("UIListLayout")
+    TabListLayout.Padding = UDim.new(0, 5)
+    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabListLayout.Parent = TabSelectorFrame
+
+    local ContentContainer = Instance.new("Frame")
+    ContentContainer.Name = "ContentContainer"
+    ContentContainer.Size = UDim2.new(1, -105, 1, -45)
+    ContentContainer.Position = UDim2.new(0, 100, 0, 40)
+    ContentContainer.BackgroundTransparency = 1
+    ContentContainer.Parent = MainPanel
+
+    local Divisoria = Instance.new("Frame")
+    Divisoria.Size = UDim2.new(0, 1, 1, -45)
+    Divisoria.Position = UDim2.new(0, 96, 0, 40)
+    Divisoria.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+    Divisoria.BorderSizePixel = 0
+    Divisoria.Parent = MainPanel
+
+    local abasCriadas = {}
+    local function CriarAba(nomeAba)
+        local TabButton = Instance.new("TextButton")
+        TabButton.Size = UDim2.new(1, -4, 0, 30)
+        TabButton.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+        TabButton.Text = string.upper(nomeAba)
+        TabButton.TextColor3 = Color3.fromRGB(150, 150, 150)
+        TabButton.TextSize = 11
+        TabButton.Font = Enum.Font.GothamBold
+        TabButton.Parent = TabSelectorFrame
+
+        local TabBtnCorner = Instance.new("UICorner")
+        TabBtnCorner.CornerRadius = UDim.new(0, 4)
+        TabBtnCorner.Parent = TabButton
+
+        local PageFrame = Instance.new("ScrollingFrame")
+        PageFrame.Name = nomeAba .. "Page"
+        PageFrame.Size = UDim2.new(1, 0, 1, 0)
+        PageFrame.BackgroundTransparency = 1
+        PageFrame.Visible = false
+        PageFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+        PageFrame.ScrollBarThickness = 2
+        PageFrame.Parent = ContentContainer
+
+        local PageLayout = Instance.new("UIListLayout")
+        PageLayout.Padding = UDim.new(0, 6)
+        PageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        PageLayout.Parent = PageFrame
+
+        TabButton.MouseButton1Click:Connect(function()
+            for _, aba in ipairs(abasCriadas) do
+                aba.Page.Visible = false
+                aba.Button.TextColor3 = Color3.fromRGB(150, 150, 150)
+                aba.Button.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+            end
+            PageFrame.Visible = true
+            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            TabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+        end)
+
+        table.insert(abasCriadas, {Button = TabButton, Page = PageFrame})
+        TabSelectorFrame.CanvasSize = UDim2.new(0, 0, 0, TabListLayout.AbsoluteContentSize.Y)
+        
+        if #abasCriadas == 1 then
+            PageFrame.Visible = true
+            TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            TabButton.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+        end
+
+        return PageFrame, PageLayout
+    end
+
+    -- Criando as abas iniciais do menu
+    local PageCombat, LayoutCombat = CriarAba("Combat")
+    local PageVisuals, LayoutVisuals = CriarAba("Visuals")
+
+    -- [[ BOTÃO MIRA PERSONALIZADA (DENTRO DA ABA COMBAT) ]]
+    local CrosshairEnabled = false
+    local CrosshairCenter = nil
+
+    local ToggleCrosshairBtn = Instance.new("TextButton")
+    ToggleCrosshairBtn.Size = UDim2.new(1, -5, 0, 32)
+    ToggleCrosshairBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 35)
+    ToggleCrosshairBtn.Text = "MIRA PERSONALIZADA: OFF"
+    ToggleCrosshairBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+    ToggleCrosshairBtn.TextSize = 11
+    ToggleCrosshairBtn.Font = Enum.Font.GothamBold
+    ToggleCrosshairBtn.Parent = PageCombat
+
+    local CrosshairCorner = Instance.new("UICorner")
+    CrosshairCorner.CornerRadius = UDim.new(0, 5)
+    CrosshairCorner.Parent = ToggleCrosshairBtn
+
+    ToggleCrosshairBtn.MouseButton1Click:Connect(function()
+        CrosshairEnabled = not CrosshairEnabled
+        if CrosshairEnabled then
+            ToggleCrosshairBtn.Text = "MIRA PERSONALIZADA: ON"
+            ToggleCrosshairBtn.TextColor3 = Color3.fromRGB(50, 255, 50)
+            if not CrosshairCenter then
+                CrosshairCenter = Instance.new("ScreenGui")
+                CrosshairCenter.Name = "DripCrosshair"
+                CrosshairCenter.Parent = game:GetService("CoreGui") or LocalPlayer:WaitForChild("PlayerGui")
+                
+                local LineH = Instance.new("Frame")
+                LineH.Size = UDim2.new(0, 16, 0, 2)
+                LineH.Position = UDim2.new(0.5, -8, 0.5, -1)
+                LineH.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+                LineH.BorderSizePixel = 0
+                LineH.Parent = CrosshairCenter
+                
+                local LineV = Instance.new("Frame")
+                LineV.Size = UDim2.new(0, 2, 0, 16)
+                LineV.Position = UDim2.new(0.5, -1, 0.5, -8)
+                LineV.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+                LineV.BorderSizePixel = 0
+                LineV.Parent = CrosshairCenter
+            end
+        else
+            ToggleCrosshairBtn.Text = "MIRA PERSONALIZADA: OFF"
+            ToggleCrosshairBtn.TextColor3 = Color3.fromRGB(255, 50, 50)
+            if CrosshairCenter then
+                CrosshairCenter:Destroy()
+                CrosshairCenter = nil
+            end
+        end
+    end)
+    PageCombat.CanvasSize = UDim2.new(0, 0, 0, LayoutCombat.AbsoluteContentSize.Y)
+    -- ====================================================================
+    -- [[ FIM DO BLOCO DE ABAS ]]
+    -- ====================================================================
 
     -- [[ 2. BOTÃO ABRIR / FECHAR (ARRASTÁVEL) ]]
     local ToggleButton = Instance.new("TextButton")
