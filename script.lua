@@ -348,7 +348,229 @@ BtnSafe.MouseButton1Click:Connect(function()
         BtnSafe.UIStroke.Color = Color3.fromRGB(0, 150, 255)
     end
 end)
+-- ========================================================
+-- 🎯 CONFIGURAÇÃO DA SEGUNDA ABA (MIRA) COM AS FUNÇÕES
+-- ========================================================
+-- Cria o ambiente com Scroll para caber as 15 funções sem bugar
+local MiraScroll = Instance.new("ScrollingFrame")
+MiraScroll.Name = "MiraScroll"
+MiraScroll.Parent = PaginasCriadas[2] -- Injeta direto na aba 2 (Mira)
+MiraScroll.Size = UDim2.new(1, 0, 1, 0)
+MiraScroll.BackgroundTransparency = 1
+MiraScroll.CanvasSize = UDim2.new(0, 0, 0, 680) -- Canvas maior porque são muitos botões
+MiraScroll.ScrollBarThickness = 0
 
+-- Remove o texto antigo "EM BREVE" da segunda aba
+if PaginasCriadas[2]:FindFirstChildOfClass("TextLabel") then
+    PaginasCriadas[2]:FindFirstChildOfClass("TextLabel"):Destroy()
+end
+
+local MiraLayout = Instance.new("UIListLayout")
+MiraLayout.Parent = MiraScroll
+MiraLayout.SortOrder = Enum.SortOrder.LayoutOrder
+MiraLayout.Padding = UDim.new(0, 6)
+
+-- Variáveis de Controle de Configuração (Modificáveis pelas funções)
+local ConfigMira = {
+    Aimbot = false,
+    Aimlock = false,
+    Headtrick = false,
+    AutoCapa = false,
+    MagicBullet = false,
+    AimFOV = 100,
+    FOVCircle = false,
+    SmoothAim = 1, -- 1 = instantâneo, valores maiores = mais lento
+    Prediction = false,
+    TargetPart = "Head", -- Parte padrão do corpo
+    AutoFire = false,
+    Triggerbot = false,
+    AimAssist = false
+}
+
+-- Círculo do FOV usando a API nativa dos executores (Delta)
+local CirculoFOV = nil
+if type(Drawing) == "table" and type(Drawing.new) == "function" then
+    CirculoFOV = Drawing.new("Circle")
+    CirculoFOV.Color = Color3.fromRGB(0, 150, 255)
+    CirculoFOV.Thickness = 1.5
+    CirculoFOV.NumSides = 64
+    CirculoFOV.Radius = ConfigMira.AimFOV
+    CirculoFOV.Filled = false
+    CirculoFOV.Visible = false
+end
+
+-- Função para criar os botões Liga/Desliga alternando a cor da borda
+local function CriarToggleMira(nome, variavel, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = MiraScroll
+    Btn.Size = UDim2.new(1, -5, 0, 36)
+    Btn.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+    Btn.Font = Enum.Font.GothamMedium
+    Btn.Text = nome .. ": DESATIVADO ❌"
+    Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Btn.TextSize = 13
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Btn
+    
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Parent = Btn
+    Stroke.Color = Color3.fromRGB(130, 0, 255) -- Começa roxo padrão
+    Stroke.Thickness = 1
+    Stroke.Transparency = 0.5
+    
+    Btn.MouseButton1Click:Connect(function()
+        ConfigMira[variavel] = not ConfigMira[variavel]
+        if ConfigMira[variavel] then
+            Btn.Text = nome .. ": ATIVADO  "
+            Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Stroke.Color = Color3.fromRGB(0, 255, 100) -- Verde ao ativar
+        else
+            Btn.Text = nome .. ": DESATIVADO ❌"
+            Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            Stroke.Color = Color3.fromRGB(130, 0, 255)
+        end
+        if callback then callback(ConfigMira[variavel]) end
+    end)
+    return Btn
+end
+-- ========================================================
+-- ⚡ MONTAGEM DOS 15 BOTÕES DE CONFIGURAÇÃO DE COMBATE
+-- ========================================================
+
+CriarToggleMira("Aimbot 🤖", "Aimbot", function(estado)
+    print("Aimbot alterado para: ", estado)
+end)
+
+CriarToggleMira("Aimlock 🔒", "Aimlock")
+
+CriarToggleMira("Headtrick 🧠", "Headtrick")
+
+CriarToggleMira("Auto Capa 🔥", "AutoCapa")
+
+CriarToggleMira("Magic Bullet 🔮", "MagicBullet")
+
+-- Botão de Configuração de Tamanho do FOV (Clica para aumentar de 50 em 50)
+local BtnFOV = Instance.new("TextButton")
+BtnFOV.Parent = MiraScroll
+BtnFOV.Size = UDim2.new(1, -5, 0, 36)
+BtnFOV.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+BtnFOV.Font = Enum.Font.GothamMedium
+BtnFOV.Text = "Aim FOV: 100px 📐"
+BtnFOV.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnFOV.TextSize = 13
+
+local FOVCorner = Instance.new("UICorner")
+FOVCorner.CornerRadius = UDim.new(0, 6)
+FOVCorner.Parent = BtnFOV
+
+local FOVStroke = Instance.new("UIStroke")
+FOVStroke.Parent = BtnFOV
+FOVStroke.Color = Color3.fromRGB(130, 0, 255)
+FOVStroke.Thickness = 1
+
+BtnFOV.MouseButton1Click:Connect(function()
+    if ConfigMira.AimFOV >= 300 then
+        ConfigMira.AimFOV = 50
+    else
+        ConfigMira.AimFOV = ConfigMira.AimFOV + 50
+    end
+    BtnFOV.Text = "Aim FOV: " .. ConfigMira.AimFOV .. "px 📐"
+    if CirculoFOV then CirculoFOV.Radius = ConfigMira.AimFOV end
+end)
+
+CriarToggleMira("FOV Circle ⭕", "FOVCircle", function(estado)
+    if CirculoFOV then CirculoFOV.Visible = estado end
+end)
+
+-- Botão de Ajuste de Suavidade da Mira (Smooth)
+local BtnSmooth = Instance.new("TextButton")
+BtnSmooth.Parent = MiraScroll
+BtnSmooth.Size = UDim2.new(1, -5, 0, 36)
+BtnSmooth.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+BtnSmooth.Font = Enum.Font.GothamMedium
+BtnSmooth.Text = "Smooth Aim: Rápido ⚡"
+BtnSmooth.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnSmooth.TextSize = 13
+
+local SmoothCorner = Instance.new("UICorner")
+SmoothCorner.CornerRadius = UDim.new(0, 6)
+SmoothCorner.Parent = BtnSmooth
+
+local SmoothStroke = Instance.new("UIStroke")
+SmoothStroke.Parent = BtnSmooth
+SmoothStroke.Color = Color3.fromRGB(130, 0, 255)
+SmoothStroke.Thickness = 1
+
+BtnSmooth.MouseButton1Click:Connect(function()
+    if ConfigMira.SmoothAim == 1 then
+        ConfigMira.SmoothAim = 5
+        BtnSmooth.Text = "Smooth Aim: Médio 🔄"
+    elseif ConfigMira.SmoothAim == 5 then
+        ConfigMira.SmoothAim = 10
+        BtnSmooth.Text = "Smooth Aim: Lento 🐌"
+    else
+        ConfigMira.SmoothAim = 1
+        BtnSmooth.Text = "Smooth Aim: Rápido ⚡"
+    end
+end)
+
+CriarToggleMira("Aim Prediction 🔮", "Prediction")
+
+-- Botão de seleção de prioridade de parte do corpo
+local BtnPart = Instance.new("TextButton")
+BtnPart.Parent = MiraScroll
+BtnPart.Size = UDim2.new(1, -5, 0, 36)
+BtnPart.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+BtnPart.Font = Enum.Font.GothamMedium
+BtnPart.Text = "Prioridade: Cabeça 👤"
+BtnPart.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnPart.TextSize = 13
+
+local PartCorner = Instance.new("UICorner")
+PartCorner.CornerRadius = UDim.new(0, 6)
+PartCorner.Parent = BtnPart
+
+local PartStroke = Instance.new("UIStroke")
+PartStroke.Parent = BtnPart
+PartStroke.Color = Color3.fromRGB(130, 0, 255)
+PartStroke.Thickness = 1
+
+BtnPart.MouseButton1Click:Connect(function()
+    if ConfigMira.TargetPart == "Head" then
+        ConfigMira.TargetPart = "UpperTorso"
+        BtnPart.Text = "Prioridade: Pescoço/Peito 👕"
+    else
+        ConfigMira.TargetPart = "Head"
+        BtnPart.Text = "Prioridade: Cabeça 👤"
+    end
+end)
+
+-- Botões adicionais com ações diretas ou mocks rápidos para controle de mira
+CriarToggleMira("Aim Neck 🦴", "AimNeck", function(estado)
+    if estado then ConfigMira.TargetPart = "UpperTorso" end
+end)
+
+CriarToggleMira("Aim Head 🧠", "AimHead", function(estado)
+    if estado then ConfigMira.TargetPart = "Head" end
+end)
+
+CriarToggleMira("Drag Head 🚀", "DragHead")
+
+CriarToggleMira("Auto Fire 💥", "AutoFire")
+
+CriarToggleMira("Triggerbot 🔫", "Triggerbot")
+
+CriarToggleMira("Aim Assist 🛡️", "AimAssist")
+
+-- Loop de Renderização para atualizar o círculo na tela do celular do jogador
+game:GetService("RunService").RenderStepped:Connect(function()
+    if CirculoFOV and CirculoFOV.Visible then
+        local MouseLocation = game:GetService("UserInputService"):GetMouseLocation()
+        CirculoFOV.Position = Vector2.new(MouseLocation.X, MouseLocation.Y)
+    end
+end)
 -- ========================================================
 -- 🖼️ BOTÃO DE IMAGEM ARRASTÁVEL
 -- ========================================================
