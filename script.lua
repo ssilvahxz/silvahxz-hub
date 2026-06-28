@@ -477,14 +477,126 @@ BtnFOV.MouseButton1Click:Connect(function()
         ConfigMira.AimFOV = ConfigMira.AimFOV + 50
     end
     BtnFOV.Text = "Aim FOV: " .. ConfigMira.AimFOV .. "px 📐"
+-- ========================================================
+-- 🎯 CONFIGURAÇÃO DA SEGUNDA ABA (MIRA) COM LÓGICA REAL
+-- ========================================================
+local MiraScroll = Instance.new("ScrollingFrame")
+MiraScroll.Name = "MiraScroll"
+MiraScroll.Parent = PaginasCriadas[2]
+MiraScroll.Size = UDim2.new(1, 0, 1, 0)
+MiraScroll.BackgroundTransparency = 1
+MiraScroll.CanvasSize = UDim2.new(0, 0, 0, 680)
+MiraScroll.ScrollBarThickness = 0
+
+if PaginasCriadas[2]:FindFirstChildOfClass("TextLabel") then
+    PaginasCriadas[2]:FindFirstChildOfClass("TextLabel"):Destroy()
+end
+
+local MiraLayout = Instance.new("UIListLayout")
+MiraLayout.Parent = MiraScroll
+MiraLayout.SortOrder = Enum.SortOrder.LayoutOrder
+MiraLayout.Padding = UDim.new(0, 6)
+
+-- ⚙️ TABELA DE CONFIGURAÇÕES REAIS (O Aimbot lê daqui)
+local ConfigMira = {
+    Aimbot = false,
+    Aimlock = false,
+    Headtrick = false,
+    AutoCapa = false,
+    MagicBullet = false,
+    AimFOV = 100,
+    FOVCircle = false,
+    SmoothAim = 1, -- Quanto maior, mais suave/lento puxa
+    Prediction = false,
+    TargetPart = "Head",
+    AutoFire = false,
+    Triggerbot = false,
+    AimAssist = false
+}
+
+-- ⭕ CÍRCULO DO FOV TOTALMENTE FIXO NO CENTRO DA TELA
+local Camera = workspace.CurrentCamera
+local CirculoFOV = nil
+
+if type(Drawing) == "table" and type(Drawing.new) == "function" then
+    CirculoFOV = Drawing.new("Circle")
+    CirculoFOV.Color = Color3.fromRGB(0, 150, 255)
+    CirculoFOV.Thickness = 1.5
+    CirculoFOV.NumSides = 64
+    CirculoFOV.Radius = ConfigMira.AimFOV
+    CirculoFOV.Filled = false
+    CirculoFOV.Visible = false
+end
+
+-- Função para criar os botões Liga/Desliga da mira
+local function CriarToggleMira(nome, variavel, callback)
+    local Btn = Instance.new("TextButton")
+    Btn.Parent = MiraScroll
+    Btn.Size = UDim2.new(1, -5, 0, 36)
+    Btn.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+    Btn.Font = Enum.Font.GothamMedium
+    Btn.Text = nome .. ": DESATIVADO ❌"
+    Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Btn.TextSize = 13
+    
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Btn
+    
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Parent = Btn
+    Stroke.Color = Color3.fromRGB(130, 0, 255)
+    Stroke.Thickness = 1
+    Stroke.Transparency = 0.5
+    
+    Btn.MouseButton1Click:Connect(function()
+        ConfigMira[variavel] = not ConfigMira[variavel]
+        if ConfigMira[variavel] then
+            Btn.Text = nome .. ": ATIVADO  "
+            Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Stroke.Color = Color3.fromRGB(0, 255, 100)
+        else
+            Btn.Text = nome .. ": DESATIVADO ❌"
+            Btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            Stroke.Color = Color3.fromRGB(130, 0, 255)
+        end
+        if callback then callback(ConfigMira[variavel]) end
+    end)
+    return Btn
+end
+
+-- ========================================================
+-- 💥 CRIAÇÃO DOS BOTÕES COMPATÍVEIS COM O SISTEMA
+-- ========================================================
+CriarToggleMira("Aimbot 🤖", "Aimbot")
+CriarToggleMira("Aimlock 🔒", "Aimlock")
+CriarToggleMira("Headtrick 🧠", "Headtrick", function(estado) if estado then ConfigMira.TargetPart = "Head" end end)
+CriarToggleMira("Auto Capa 🔥", "AutoCapa")
+CriarToggleMira("Magic Bullet 🔮", "MagicBullet")
+
+-- Ajuste de Tamanho do FOV
+local BtnFOV = Instance.new("TextButton")
+BtnFOV.Parent = MiraScroll
+BtnFOV.Size = UDim2.new(1, -5, 0, 36)
+BtnFOV.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
+BtnFOV.Font = Enum.Font.GothamMedium
+BtnFOV.Text = "Aim FOV: 100px 📐"
+BtnFOV.TextColor3 = Color3.fromRGB(255, 255, 255)
+BtnFOV.TextSize = 13
+local FOVCorner, FOVStroke = Instance.new("UICorner"), Instance.new("UIStroke")
+FOVCorner.CornerRadius = UDim.new(0, 6)
+FOVCorner.Parent = BtnFOV
+FOVStroke.Parent = BtnFOV; FOVStroke.Color = Color3.fromRGB(130, 0, 255)
+
+BtnFOV.MouseButton1Click:Connect(function()
+    if ConfigMira.AimFOV >= 300 then ConfigMira.AimFOV = 50 else ConfigMira.AimFOV = ConfigMira.AimFOV + 50 end
+    BtnFOV.Text = "Aim FOV: " .. ConfigMira.AimFOV .. "px 📐"
     if CirculoFOV then CirculoFOV.Radius = ConfigMira.AimFOV end
 end)
 
-CriarToggleMira("FOV Circle ⭕", "FOVCircle", function(estado)
-    if CirculoFOV then CirculoFOV.Visible = estado end
-end)
+CriarToggleMira("FOV Circle ⭕", "FOVCircle", function(estado) if CirculoFOV then CirculoFOV.Visible = estado end end)
 
--- Botão de Ajuste de Suavidade da Mira (Smooth)
+-- Ajuste de Smooth (Suavidade)
 local BtnSmooth = Instance.new("TextButton")
 BtnSmooth.Parent = MiraScroll
 BtnSmooth.Size = UDim2.new(1, -5, 0, 36)
@@ -493,82 +605,80 @@ BtnSmooth.Font = Enum.Font.GothamMedium
 BtnSmooth.Text = "Smooth Aim: Rápido ⚡"
 BtnSmooth.TextColor3 = Color3.fromRGB(255, 255, 255)
 BtnSmooth.TextSize = 13
-
-local SmoothCorner = Instance.new("UICorner")
+local SmoothCorner, SmoothStroke = Instance.new("UICorner"), Instance.new("UIStroke")
 SmoothCorner.CornerRadius = UDim.new(0, 6)
 SmoothCorner.Parent = BtnSmooth
-
-local SmoothStroke = Instance.new("UIStroke")
-SmoothStroke.Parent = BtnSmooth
-SmoothStroke.Color = Color3.fromRGB(130, 0, 255)
-SmoothStroke.Thickness = 1
+SmoothStroke.Parent = BtnSmooth; SmoothStroke.Color = Color3.fromRGB(130, 0, 255)
 
 BtnSmooth.MouseButton1Click:Connect(function()
-    if ConfigMira.SmoothAim == 1 then
-        ConfigMira.SmoothAim = 5
-        BtnSmooth.Text = "Smooth Aim: Médio 🔄"
-    elseif ConfigMira.SmoothAim == 5 then
-        ConfigMira.SmoothAim = 10
-        BtnSmooth.Text = "Smooth Aim: Lento 🐌"
-    else
-        ConfigMira.SmoothAim = 1
-        BtnSmooth.Text = "Smooth Aim: Rápido ⚡"
-    end
+    if ConfigMira.SmoothAim == 1 then ConfigMira.SmoothAim = 4; BtnSmooth.Text = "Smooth Aim: Médio 🔄"
+    elseif ConfigMira.SmoothAim == 4 then ConfigMira.SmoothAim = 8; BtnSmooth.Text = "Smooth Aim: Lento 🐌"
+    else ConfigMira.SmoothAim = 1; BtnSmooth.Text = "Smooth Aim: Rápido ⚡" end
 end)
 
 CriarToggleMira("Aim Prediction 🔮", "Prediction")
 
--- Botão de seleção de prioridade de parte do corpo
-local BtnPart = Instance.new("TextButton")
-BtnPart.Parent = MiraScroll
-BtnPart.Size = UDim2.new(1, -5, 0, 36)
-BtnPart.BackgroundColor3 = Color3.fromRGB(22, 22, 28)
-BtnPart.Font = Enum.Font.GothamMedium
-BtnPart.Text = "Prioridade: Cabeça 👤"
-BtnPart.TextColor3 = Color3.fromRGB(255, 255, 255)
-BtnPart.TextSize = 13
-
-local PartCorner = Instance.new("UICorner")
-PartCorner.CornerRadius = UDim.new(0, 6)
-PartCorner.Parent = BtnPart
-
-local PartStroke = Instance.new("UIStroke")
-PartStroke.Parent = BtnPart
-PartStroke.Color = Color3.fromRGB(130, 0, 255)
-PartStroke.Thickness = 1
-
-BtnPart.MouseButton1Click:Connect(function()
-    if ConfigMira.TargetPart == "Head" then
-        ConfigMira.TargetPart = "UpperTorso"
-        BtnPart.Text = "Prioridade: Pescoço/Peito 👕"
-    else
-        ConfigMira.TargetPart = "Head"
-        BtnPart.Text = "Prioridade: Cabeça 👤"
-    end
-end)
-
--- Botões adicionais com ações diretas ou mocks rápidos para controle de mira
-CriarToggleMira("Aim Neck 🦴", "AimNeck", function(estado)
-    if estado then ConfigMira.TargetPart = "UpperTorso" end
-end)
-
-CriarToggleMira("Aim Head 🧠", "AimHead", function(estado)
-    if estado then ConfigMira.TargetPart = "Head" end
-end)
-
+-- Alvos de mira específicos
+CriarToggleMira("Aim Head 🧠", "AimHead", function(estado) if estado then ConfigMira.TargetPart = "Head" end end)
+CriarToggleMira("Aim Neck 🦴", "AimNeck", function(estado) if estado then ConfigMira.TargetPart = "UpperTorso" end end)
 CriarToggleMira("Drag Head 🚀", "DragHead")
-
 CriarToggleMira("Auto Fire 💥", "AutoFire")
-
 CriarToggleMira("Triggerbot 🔫", "Triggerbot")
-
 CriarToggleMira("Aim Assist 🛡️", "AimAssist")
 
--- Loop de Renderização para atualizar o círculo na tela do celular do jogador
+-- ========================================================
+-- 🧠 MOTOR MATEMÁTICO DO AIMBOT (FAZ A MIRA PUXAR DE FATO)
+-- ========================================================
+local Players = game:GetService("Players")
+
+local function ObterInimigoMaisProximo()
+    local AlvoMaisProximo = nil
+    local MenorDistanciaFov = ConfigMira.AimFOV
+
+    local CentroTela = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+            
+            local ParteParaMirar = player.Character:FindFirstChild(ConfigMira.TargetPart) or player.Character:FindFirstChild("Head")
+            if ParteParaMirar then
+                -- Transforma a posição 3D do inimigo em 2D na tela do celular
+                local PosicaoTela, NaTela = Camera:WorldToViewportPoint(ParteParaMirar.Position)
+                
+                if NaTela then
+                    local PosicaoInimigo2D = Vector2.new(PosicaoTela.X, PosicaoTela.Y)
+                    local DistanciaDoCentro = (PosicaoInimigo2D - CentroTela).Magnitude
+                    
+                    -- Se estiver dentro do círculo e for o mais perto do meio
+                    if DistanciaDoCentro < MenorDistanciaFov then
+                        MenorDistanciaFov = DistanciaDoCentro
+                        AlvoMaisProximo = ParteParaMirar
+                    end
+                end
+            end
+        end
+    end
+    return AlvoMaisProximo
+end
+
+-- LOOP DE RENDERIZAÇÃO 60FPS: Mantém FOV fixo e manipula a Câmera
 game:GetService("RunService").RenderStepped:Connect(function()
-    if CirculoFOV and CirculoFOV.Visible then
-        local MouseLocation = game:GetService("UserInputService"):GetMouseLocation()
-        CirculoFOV.Position = Vector2.new(MouseLocation.X, MouseLocation.Y)
+    local CentroX = Camera.ViewportSize.X / 2
+    local CentroY = Camera.ViewportSize.Y / 2
+
+    -- Mantém o Círculo fixado de forma absoluta no centro da tela
+    if CirculoFOV then
+        CirculoFOV.Position = Vector2.new(CentroX, CentroY)
+    end
+
+    -- Executa o comportamento físico da mira puxando
+    if ConfigMira.Aimbot or ConfigMira.Aimlock then
+        local Alvo = ObterInimigoMaisProximo()
+        if Alvo then
+            -- Se for Aimlock ou Aimbot ativo, altera o CFrame da Câmera na velocidade do Smooth
+            local PosicaoAlvoCFrame = CFrame.new(Camera.CFrame.Position, Alvo.Position)
+            Camera.CFrame = Camera.CFrame:Lerp(PosicaoAlvoCFrame, 1 / ConfigMira.SmoothAim)
+        end
     end
 end)
 -- ========================================================
